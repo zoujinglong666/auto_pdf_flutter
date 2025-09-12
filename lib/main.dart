@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PDF Reader',
+      title: 'PDF 阅读器',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -138,39 +138,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
         title: const Text(
-          'PDF Reader',
+          'PDF 阅读器',
           style: TextStyle(
             color: Color(0xFF1F2937),
-            fontSize: 28,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
         ),
       ),
-      actions: [
-        IconButton(
-          onPressed: () {},
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.settings_outlined,
-              color: Color(0xFF6B7280),
-              size: 20,
-            ),
-          ),
-        ),
-        const SizedBox(width: 24),
-      ],
+      // actions: [
+      //   IconButton(
+      //     onPressed: () {},
+      //     icon: Container(
+      //       padding: const EdgeInsets.all(8),
+      //       decoration: BoxDecoration(
+      //         color: Colors.white,
+      //         borderRadius: BorderRadius.circular(12),
+      //         boxShadow: [
+      //           BoxShadow(
+      //             color: Colors.black.withOpacity(0.05),
+      //             blurRadius: 10,
+      //             offset: const Offset(0, 2),
+      //           ),
+      //         ],
+      //       ),
+      //       child: const Icon(
+      //         Icons.settings_outlined,
+      //         color: Color(0xFF6B7280),
+      //         size: 20,
+      //       ),
+      //     ),
+      //   ),
+      //   const SizedBox(width: 24),
+      // ],
     );
   }
 
@@ -212,7 +212,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
           const SizedBox(height: 24),
           const Text(
-            'Open & Read\nPDF Documents',
+            '打开并阅读\nPDF 文档',
             style: TextStyle(
               color: Colors.white,
               fontSize: 28,
@@ -222,7 +222,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
           const SizedBox(height: 12),
           Text(
-            'View, zoom, and navigate through your PDF files with ease',
+            '轻松查看、缩放并浏览您的 PDF 文件',
             style: TextStyle(
               color: Colors.white.withOpacity(0.9),
               fontSize: 16,
@@ -239,7 +239,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Quick Actions',
+          '快速操作',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -252,8 +252,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             Expanded(
               child: _buildActionCard(
                 icon: Icons.folder_open_rounded,
-                title: 'Browse Files',
-                subtitle: 'Select from device',
+                title: '浏览文件',
+                subtitle: '从设备中选择',
                 color: const Color(0xFF10B981),
                 onTap: _pickPdfFile,
               ),
@@ -262,8 +262,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             Expanded(
               child: _buildActionCard(
                 icon: Icons.cloud_download_rounded,
-                title: 'Sample PDF',
-                subtitle: 'Try demo file',
+                title: '示例 PDF',
+                subtitle: '尝试演示文件',
                 color: const Color(0xFF3B82F6),
                 onTap: _openSamplePdf,
               ),
@@ -376,7 +376,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
               const SizedBox(width: 12),
               const Text(
-                'Open from URL',
+                '从 URL 打开',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -389,7 +389,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           TextField(
             controller: _urlController,
             decoration: InputDecoration(
-              hintText: 'Enter PDF URL...',
+              hintText: '输入 PDF URL...',
               hintStyle: TextStyle(
                 color: Colors.grey.shade500,
                 fontSize: 16,
@@ -412,14 +412,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             child: ElevatedButton(
               onPressed: () {
                 if (_urlController.text.isNotEmpty) {
-                  _openNetworkPdf(_urlController.text, 'Network PDF');
+                  _openNetworkPdf(_urlController.text, '网络 PDF');
                 }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6366F1),
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Open PDF'),
+              child: const Text('打开 PDF'),
             ),
           ),
         ],
@@ -435,7 +435,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Recent Files',
+              '最近文件',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -445,7 +445,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             TextButton(
               onPressed: () {},
               child: const Text(
-                'View All',
+                '查看全部',
                 style: TextStyle(
                   color: Color(0xFF6366F1),
                   fontWeight: FontWeight.w500,
@@ -474,7 +474,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 16),
               Text(
-                'No recent files',
+                '暂无最近文件',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
@@ -483,7 +483,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 8),
               Text(
-                'Your recently opened PDFs will appear here',
+                '您最近打开的 PDF 文件将显示在此处',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey.shade500,
@@ -510,11 +510,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final file = result.files.single;
         final filePath = file.path!;
         final fileName = file.name;
-        
+
         Navigator.push(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => 
+            pageBuilder: (context, animation, secondaryAnimation) =>
                 PdfViewerPage(
                   filePath: filePath,
                   title: fileName,
@@ -532,7 +532,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         );
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to select file: $e');
+      _showErrorSnackBar('选择文件失败: $e');
     }
   }
 
@@ -541,11 +541,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => 
-            const PdfViewerPage(
-              url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-              title: 'Sample Document',
-            ),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+        const PdfViewerPage(
+          url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+          title: '示例文档',
+        ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(
             position: animation.drive(
@@ -564,7 +564,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => 
+        pageBuilder: (context, animation, secondaryAnimation) =>
             PdfViewerPage(
               url: url,
               title: title,
