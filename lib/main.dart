@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'pages/pdf_viewer_page.dart';
 
@@ -12,22 +13,45 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PDF 助手',
+      title: 'PDF Reader',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        primaryColor: Colors.blue[700],
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.blue[700],
-          foregroundColor: Colors.white,
-          elevation: 2,
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6366F1),
+          brightness: Brightness.light,
+        ),
+        fontFamily: 'SF Pro Display',
+        appBarTheme: const AppBarTheme(
+          elevation: 0,
+          scrolledUnderElevation: 1,
+          centerTitle: false,
+          titleTextStyle: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        cardTheme: CardTheme(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: Colors.grey.shade200,
+              width: 1,
+            ),
+          ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue[700],
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -44,66 +68,269 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final TextEditingController _urlController = TextEditingController();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+    _animationController.forward();
+  }
 
   @override
   void dispose() {
     _urlController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('PDF 助手'),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildWelcomeCard(),
-            const SizedBox(height: 24),
-            _buildQuickAccessSection(),
-            const SizedBox(height: 24),
-            _buildNetworkSection(),
-          ],
+      backgroundColor: const Color(0xFFFAFAFA),
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: CustomScrollView(
+            slivers: [
+              _buildAppBar(),
+              SliverPadding(
+                padding: const EdgeInsets.all(24),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    _buildHeroSection(),
+                    const SizedBox(height: 32),
+                    _buildQuickActions(),
+                    const SizedBox(height: 32),
+                    _buildUrlInput(),
+                    const SizedBox(height: 32),
+                    _buildRecentSection(),
+                  ]),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  /// 构建欢迎卡片
-  Widget _buildWelcomeCard() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+  Widget _buildAppBar() {
+    return SliverAppBar(
+      backgroundColor: const Color(0xFFFAFAFA),
+      elevation: 0,
+      pinned: false,
+      floating: true,
+      expandedHeight: 80,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
+        title: const Text(
+          'PDF Reader',
+          style: TextStyle(
+            color: Color(0xFF1F2937),
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      actions: [
+        IconButton(
+          onPressed: () {},
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.settings_outlined,
+              color: Color(0xFF6B7280),
+              size: 20,
+            ),
+          ),
+        ),
+        const SizedBox(width: 24),
+      ],
+    );
+  }
+
+  Widget _buildHeroSection() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF6366F1),
+            Color(0xFF8B5CF6),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6366F1).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.picture_as_pdf_rounded,
+              color: Colors.white,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Open & Read\nPDF Documents',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'View, zoom, and navigate through your PDF files with ease',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Quick Actions',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
           children: [
-            Icon(
-              Icons.picture_as_pdf,
-              size: 64,
-              color: Colors.blue[700],
+            Expanded(
+              child: _buildActionCard(
+                icon: Icons.folder_open_rounded,
+                title: 'Browse Files',
+                subtitle: 'Select from device',
+                color: const Color(0xFF10B981),
+                onTap: _pickPdfFile,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildActionCard(
+                icon: Icons.cloud_download_rounded,
+                title: 'Sample PDF',
+                subtitle: 'Try demo file',
+                color: const Color(0xFF3B82F6),
+                onTap: _openSamplePdf,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.grey.shade200,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 24,
+              ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              '欢迎使用 PDF 助手',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1F2937),
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              '支持本地和网络 PDF 文件查看\n具备完整的缩放、平移、翻页功能',
-              textAlign: TextAlign.center,
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
               style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Colors.grey.shade600,
               ),
             ),
           ],
@@ -112,99 +339,166 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// 构建快速访问区域
-  Widget _buildQuickAccessSection() {
+  Widget _buildUrlInput() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey.shade200,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6366F1).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.link_rounded,
+                  color: Color(0xFF6366F1),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Open from URL',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _urlController,
+            decoration: InputDecoration(
+              hintText: 'Enter PDF URL...',
+              hintStyle: TextStyle(
+                color: Colors.grey.shade500,
+                fontSize: 16,
+              ),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                if (_urlController.text.isNotEmpty) {
+                  _openNetworkPdf(_urlController.text, 'Network PDF');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6366F1),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Open PDF'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '打开文件',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _pickPdfFile,
-                    icon: const Icon(Icons.folder_open),
-                    label: const Text('选择本地 PDF 文件'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _openSamplePdf(),
-                    icon: const Icon(Icons.cloud_download),
-                    label: const Text('查看示例 PDF'),
-                  ),
-                ),
-              ],
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Recent Files',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1F2937),
+              ),
             ),
+            TextButton(
+              onPressed: () {},
+              child: const Text(
+                'View All',
+                style: TextStyle(
+                  color: Color(0xFF6366F1),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.grey.shade200,
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.history_rounded,
+                size: 48,
+                color: Colors.grey.shade400,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No recent files',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Your recently opened PDFs will appear here',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  /// 构建网络文件区域
-  Widget _buildNetworkSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '网络文件',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _urlController,
-                  decoration: const InputDecoration(
-                    labelText: 'PDF 网络地址',
-                    hintText: '输入 PDF 文件的 URL',
-                    prefixIcon: Icon(Icons.link),
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      if (_urlController.text.isNotEmpty) {
-                        _openNetworkPdf(_urlController.text, '网络文档');
-                      }
-                    },
-                    icon: const Icon(Icons.open_in_browser),
-                    label: const Text('打开网络 PDF'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// 选择 PDF 文件
   Future<void> _pickPdfFile() async {
+    HapticFeedback.lightImpact();
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -219,46 +513,85 @@ class _HomePageState extends State<HomePage> {
         
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => PdfViewerPage(
-              filePath: filePath,
-              title: fileName,
-            ),
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => 
+                PdfViewerPage(
+                  filePath: filePath,
+                  title: fileName,
+                ),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: animation.drive(
+                  Tween(begin: const Offset(1.0, 0.0), end: Offset.zero)
+                      .chain(CurveTween(curve: Curves.easeOutCubic)),
+                ),
+                child: child,
+              );
+            },
           ),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('文件选择失败: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showErrorSnackBar('Failed to select file: $e');
     }
   }
 
-  /// 打开示例 PDF
   void _openSamplePdf() {
+    HapticFeedback.lightImpact();
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const PdfViewerPage(
-          url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-          title: '示例文档',
-        ),
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => 
+            const PdfViewerPage(
+              url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+              title: 'Sample Document',
+            ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SlideTransition(
+            position: animation.drive(
+              Tween(begin: const Offset(1.0, 0.0), end: Offset.zero)
+                  .chain(CurveTween(curve: Curves.easeOutCubic)),
+            ),
+            child: child,
+          );
+        },
       ),
     );
   }
 
-  /// 打开网络 PDF
   void _openNetworkPdf(String url, String title) {
+    HapticFeedback.lightImpact();
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => PdfViewerPage(
-          url: url,
-          title: title,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => 
+            PdfViewerPage(
+              url: url,
+              title: title,
+            ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SlideTransition(
+            position: animation.drive(
+              Tween(begin: const Offset(1.0, 0.0), end: Offset.zero)
+                  .chain(CurveTween(curve: Curves.easeOutCubic)),
+            ),
+            child: child,
+          );
+        },
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFEF4444),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
