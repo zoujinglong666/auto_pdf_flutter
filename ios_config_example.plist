@@ -1,0 +1,61 @@
+<!-- iOS 配置示例 -->
+<!-- 将以下内容添加到 ios/Runner/Info.plist 文件中的 <dict> 标签内 -->
+
+<!-- 允许 HTTP 请求 -->
+<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+    <!-- 或者更安全的方式，只允许特定域名 -->
+    <key>NSExceptionDomains</key>
+    <dict>
+        <key>example.com</key>
+        <dict>
+            <key>NSExceptionAllowsInsecureHTTPLoads</key>
+            <true/>
+            <key>NSExceptionMinimumTLSVersion</key>
+            <string>TLSv1.0</string>
+        </dict>
+    </dict>
+</dict>
+
+<!-- 文件访问权限说明 -->
+<key>NSDocumentsFolderUsageDescription</key>
+<string>此应用需要访问文档文件夹以打开 PDF 文件</string>
+
+<key>NSDownloadsFolderUsageDescription</key>
+<string>此应用需要访问下载文件夹以打开 PDF 文件</string>
+
+<!-- 网络使用说明 -->
+<key>NSNetworkUsageDescription</key>
+<string>此应用需要网络访问以下载 PDF 文件</string>
+
+<!-- 支持的文件类型 -->
+<key>CFBundleDocumentTypes</key>
+<array>
+    <dict>
+        <key>CFBundleTypeName</key>
+        <string>PDF Document</string>
+        <key>CFBundleTypeRole</key>
+        <string>Viewer</string>
+        <key>LSItemContentTypes</key>
+        <array>
+            <string>com.adobe.pdf</string>
+        </array>
+        <key>LSHandlerRank</key>
+        <string>Alternate</string>
+    </dict>
+</array>
+
+<!-- 支持的 URL Schemes（如果需要） -->
+<key>CFBundleURLTypes</key>
+<array>
+    <dict>
+        <key>CFBundleURLName</key>
+        <string>pdf-viewer</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <string>pdfviewer</string>
+        </array>
+    </dict>
+</array>
