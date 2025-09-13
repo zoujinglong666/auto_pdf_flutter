@@ -1,6 +1,8 @@
+import 'package:auto_pdf/components/SimpleWebView.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:file_picker/file_picker.dart';
+
 import 'pages/pdf_viewer_page.dart';
 
 void main() {
@@ -88,6 +90,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       curve: Curves.easeOutCubic,
     ));
     _animationController.forward();
+    _urlController.text =
+    'https://a.data96.com/pdf?url=https://alist-data96.oss-cn-shanghai.aliyuncs.com/PDF_On_Line.pdf';
   }
 
   @override
@@ -111,8 +115,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 padding: const EdgeInsets.all(24),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    _buildHeroSection(),
-                    const SizedBox(height: 32),
+                    // _buildHeroSection(),
+                    // const SizedBox(height: 32),
                     _buildQuickActions(),
                     const SizedBox(height: 32),
                     _buildUrlInput(),
@@ -141,7 +145,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           'PDF 阅读器',
           style: TextStyle(
             color: Color(0xFF1F2937),
-            fontSize: 16,
+            fontSize: 24,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -457,6 +461,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(24),
+          width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -559,28 +564,45 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  void _openNetworkPdf(String url, String title) {
-    HapticFeedback.lightImpact();
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            PdfViewerPage(
+ void _openNetworkPdf(String url, String title) {
+  HapticFeedback.lightImpact();
+
+  if (url.isEmpty) {
+    _showErrorSnackBar('请输入有效的 URL');
+    return;
+  }
+
+  // 检查是否为特定格式的URL
+  final regExp = RegExp(r'^https://a\.data96\.com/pdf\?url=(.+)$');
+  final isSpecialUrl = regExp.hasMatch(url);
+
+  Navigator.push(
+    context,
+    PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => isSpecialUrl
+          ? SimpleWebView(
+              initialUrl: url,
+              pageTitle: title,
+            )
+          : PdfViewerPage(
               url: url,
               title: title,
             ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return SlideTransition(
-            position: animation.drive(
-              Tween(begin: const Offset(1.0, 0.0), end: Offset.zero)
-                  .chain(CurveTween(curve: Curves.easeOutCubic)),
-            ),
-            child: child,
-          );
-        },
-      ),
-    );
-  }
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: animation.drive(
+            Tween<Offset>(
+              begin: const Offset(1.0, 0.0),
+              end: Offset.zero,
+            ).chain(CurveTween(curve: Curves.easeOutCubic)),
+          ),
+          child: child,
+        );
+      },
+    ),
+  );
+}
+
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

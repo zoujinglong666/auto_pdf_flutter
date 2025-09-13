@@ -54,6 +54,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           });
         },
         onDocumentLoadFailed: (error) {
+          print(error);
           _showErrorDialog(error);
         },
       ),

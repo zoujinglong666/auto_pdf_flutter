@@ -192,6 +192,7 @@ class _AppPdfViewerState extends State<AppPdfViewer> {
                   _pdfViewController = pdfViewController;
                 },
                 onLinkHandler: (uri) {
+                  print('点击了链接: $uri');
                   // 处理链接点击
                 },
                 onPageChanged: (page, total) {
@@ -209,71 +210,95 @@ class _AppPdfViewerState extends State<AppPdfViewer> {
     );
   }
 
-  /// 构建工具栏
-  Widget _buildToolbar() {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: Color(0xFF6366F1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+/// 构建工具栏
+Widget _buildToolbar() {
+  return Container(
+    height: 60,
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    decoration: BoxDecoration(
+      color: const Color(0xFF6366F1),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        // 页面信息显示
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(20),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // IconButton(
-          //   icon: const Icon(Icons.zoom_out, color: Colors.white),
-          //   onPressed: _isReady ? () async {
-          //     final currentZoom = await _pdfViewController?.getCurrentPage();
-          //     // flutter_pdfview 不直接支持缩放控制，这里可以实现其他逻辑
-          //   } : null,
-          // ),
-          // IconButton(
-          //   icon: const Icon(Icons.zoom_in, color: Colors.white),
-          //   onPressed: _isReady ? () async {
-          //     // flutter_pdfview 不直接支持缩放控制，这里可以实现其他逻辑
-          //   } : null,
-          // ),
-          // const Spacer(),
-          Text(
+          child: Text(
             '$_currentPage / $_totalPages',
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.first_page, color: Colors.white),
-            onPressed: _isReady ? () async {
-              await _pdfViewController?.setPage(0);
-            } : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.navigate_before, color: Colors.white),
-            onPressed: _isReady && _currentPage > 1 ? () async {
-              await _pdfViewController?.setPage(_currentPage - 2);
-            } : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.navigate_next, color: Colors.white),
-            onPressed: _isReady && _currentPage < _totalPages ? () async {
-              await _pdfViewController?.setPage(_currentPage);
-            } : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.last_page, color: Colors.white),
-            onPressed: _isReady ? () async {
-              await _pdfViewController?.setPage(_totalPages - 1);
-            } : null,
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+        const Spacer(),
+
+        // 导航按钮组
+        Row(
+          children: [
+            _buildNavButton(
+              icon: Icons.first_page,
+              onPressed: _isReady ? () async {
+                await _pdfViewController?.setPage(0);
+              } : null,
+            ),
+            const SizedBox(width: 8),
+            _buildNavButton(
+              icon: Icons.navigate_before,
+              onPressed: _isReady && _currentPage > 1 ? () async {
+                await _pdfViewController?.setPage(_currentPage - 2);
+              } : null,
+            ),
+            const SizedBox(width: 8),
+            _buildNavButton(
+              icon: Icons.navigate_next,
+              onPressed: _isReady && _currentPage < _totalPages ? () async {
+                await _pdfViewController?.setPage(_currentPage);
+              } : null,
+            ),
+            const SizedBox(width: 8),
+            _buildNavButton(
+              icon: Icons.last_page,
+              onPressed: _isReady ? () async {
+                await _pdfViewController?.setPage(_totalPages - 1);
+              } : null,
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+/// 构建导航按钮
+Widget _buildNavButton({required IconData icon, VoidCallback? onPressed}) {
+  return Container(
+    width: 40,
+    height: 40,
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(onPressed != null ? 0.2 : 0.1),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: IconButton(
+      icon: Icon(icon, color: Colors.white, size: 20),
+      onPressed: onPressed,
+      splashRadius: 24,
+      padding: EdgeInsets.zero,
+      alignment: Alignment.center,
+      constraints: const BoxConstraints(),
+    ),
+  );
+}
 }
