@@ -2,8 +2,11 @@ import 'package:auto_pdf/components/SimpleWebView.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:io';
 
+import 'components/KeyboardDismissOnTap.dart';
 import 'pages/pdf_viewer_page.dart';
+import 'utils/recent_files_manager.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,7 +37,7 @@ class MyApp extends StatelessWidget {
             color: Color(0xFF1F2937),
           ),
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -74,6 +77,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final TextEditingController _urlController = TextEditingController();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  List<RecentFileItem> _recentFiles = [];
+  bool _isLoadingRecentFiles = true;
 
   @override
   void initState() {
@@ -92,6 +97,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _animationController.forward();
     _urlController.text =
     'https://a.data96.com/pdf?url=https://alist-data96.oss-cn-shanghai.aliyuncs.com/PDF_On_Line.pdf';
+    _loadRecentFiles();
   }
 
   @override
@@ -101,31 +107,79 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  /// 加载最近文件
+  Future<void> _loadRecentFiles() async {
+    try {
+      final recentFiles = await RecentFilesManager.getRecentFiles();
+      if (mounted) {
+        setState(() {
+          _recentFiles = recentFiles;
+          _isLoadingRecentFiles = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingRecentFiles = false;
+        });
+      }
+    }
+  }
+
+  /// 添加文件到最近记录
+  Future<void> _addToRecentFiles(String title, {String? path, String? url}) async {
+    try {
+      int? fileSize;
+      if (path != null) {
+        final file = File(path);
+        if (await file.exists()) {
+          final stat = await file.stat();
+          fileSize = stat.size;
+        }
+      }
+
+      final recentItem = RecentFileItem(
+        title: title,
+        path: path,
+        url: url,
+        openTime: DateTime.now(),
+        fileSize: fileSize,
+      );
+
+      await RecentFilesManager.addRecentFile(recentItem);
+      _loadRecentFiles(); // 重新加载列表
+    } catch (e) {
+      print('添加最近文件失败: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: CustomScrollView(
-            slivers: [
-              _buildAppBar(),
-              SliverPadding(
-                padding: const EdgeInsets.all(24),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    // _buildHeroSection(),
-                    // const SizedBox(height: 32),
-                    _buildQuickActions(),
-                    const SizedBox(height: 32),
-                    _buildUrlInput(),
-                    const SizedBox(height: 32),
-                    _buildRecentSection(),
-                  ]),
+      body: KeyboardDismissOnTap(
+        child: SafeArea(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: CustomScrollView(
+              slivers: [
+                _buildAppBar(),
+                SliverPadding(
+                  padding: const EdgeInsets.all(24),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // _buildHeroSection(),
+                      // const SizedBox(height: 32),
+                      _buildQuickActions(),
+                      const SizedBox(height: 32),
+                      _buildUrlInput(),
+                      const SizedBox(height: 32),
+                      _buildRecentSection(),
+                    ]),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -446,59 +500,291 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 color: Color(0xFF1F2937),
               ),
             ),
-            TextButton(
-              onPressed: () {},
-              child: const Text(
-                '查看全部',
-                style: TextStyle(
-                  color: Color(0xFF6366F1),
-                  fontWeight: FontWeight.w500,
+            if (_recentFiles.isNotEmpty)
+              TextButton(
+                onPressed: _showAllRecentFiles,
+                child: const Text(
+                  '查看全部',
+                  style: TextStyle(
+                    color: Color(0xFF6366F1),
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(24),
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
+        _buildRecentFilesContent(),
+      ],
+    );
+  }
+
+  Widget _buildRecentFilesContent() {
+    if (_isLoadingRecentFiles) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.grey.shade200,
+            width: 1,
+          ),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_recentFiles.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.grey.shade200,
+            width: 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.history_rounded,
+              size: 48,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '暂无最近文件',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '您最近打开的 PDF 文件将显示在此处',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 显示最近文件列表（最多显示3个）
+    final displayFiles = _recentFiles.take(3).toList();
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey.shade200,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: displayFiles.asMap().entries.map((entry) {
+          final index = entry.key;
+          final file = entry.value;
+          final isLast = index == displayFiles.length - 1;
+          
+          return _buildRecentFileItem(file, isLast);
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildRecentFileItem(RecentFileItem file, bool isLast) {
+    return InkWell(
+      onTap: () => _openRecentFile(file),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: isLast ? null : Border(
+            bottom: BorderSide(
               color: Colors.grey.shade200,
               width: 1,
             ),
           ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: file.isNetworkFile 
+                    ? const Color(0xFF3B82F6).withOpacity(0.1)
+                    : const Color(0xFF10B981).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                file.isNetworkFile 
+                    ? Icons.cloud_rounded
+                    : Icons.picture_as_pdf_rounded,
+                color: file.isNetworkFile 
+                    ? const Color(0xFF3B82F6)
+                    : const Color(0xFF10B981),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    file.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1F2937),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    file.subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            PopupMenuButton<String>(
+              icon: Icon(
+                Icons.more_vert,
+                color: Colors.grey.shade400,
+                size: 20,
+              ),
+              onSelected: (value) => _handleRecentFileAction(value, file),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'remove',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, size: 18),
+                      SizedBox(width: 8),
+                      Text('移除'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 处理最近文件操作
+  void _handleRecentFileAction(String action, RecentFileItem file) async {
+    switch (action) {
+      case 'remove':
+        await RecentFilesManager.removeRecentFile(file.identifier);
+        _loadRecentFiles();
+        break;
+    }
+  }
+
+  /// 打开最近文件
+  void _openRecentFile(RecentFileItem file) {
+    HapticFeedback.lightImpact();
+    
+    if (file.isNetworkFile) {
+      _openNetworkPdf(file.url!, file.title);
+    } else {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              PdfViewerPage(
+                filePath: file.path!,
+                title: file.title,
+              ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return SlideTransition(
+              position: animation.drive(
+                Tween(begin: const Offset(1.0, 0.0), end: Offset.zero)
+                    .chain(CurveTween(curve: Curves.easeOutCubic)),
+              ),
+              child: child,
+            );
+          },
+        ),
+      );
+    }
+  }
+
+  /// 显示所有最近文件
+  void _showAllRecentFiles() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
           child: Column(
             children: [
-              Icon(
-                Icons.history_rounded,
-                size: 48,
-                color: Colors.grey.shade400,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '暂无最近文件',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade600,
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '最近文件',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        await RecentFilesManager.clearRecentFiles();
+                        _loadRecentFiles();
+                        Navigator.pop(context);
+                      },
+                      child: const Text('清空'),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                '您最近打开的 PDF 文件将显示在此处',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade500,
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  itemCount: _recentFiles.length,
+                  itemBuilder: (context, index) {
+                    final file = _recentFiles[index];
+                    return _buildRecentFileItem(file, index == _recentFiles.length - 1);
+                  },
                 ),
-                textAlign: TextAlign.center,
               ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -515,6 +801,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final file = result.files.single;
         final filePath = file.path!;
         final fileName = file.name;
+
+        // 添加到最近文件
+        await _addToRecentFiles(fileName, path: filePath);
 
         Navigator.push(
           context,
@@ -543,13 +832,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _openSamplePdf() {
     HapticFeedback.lightImpact();
+    
+    const url = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+    const title = '示例文档';
+    
+    // 添加到最近文件
+    _addToRecentFiles(title, url: url);
+    
     Navigator.push(
       context,
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
         const PdfViewerPage(
-          url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-          title: '示例文档',
+          url: url,
+          title: title,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(
@@ -571,6 +867,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _showErrorSnackBar('请输入有效的 URL');
     return;
   }
+
+  // 添加到最近文件
+  _addToRecentFiles(title, url: url);
 
   // 检查是否为特定格式的URL
   final regExp = RegExp(r'^https://a\.data96\.com/pdf\?url=(.+)$');
